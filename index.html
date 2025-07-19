@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Canvas Quiz with Input Answers Teacher Activity - 1</title>
+  <style>
+    * { font-family: "Comic Sans MS"; box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      background: url('https://i.pinimg.com/736x/fb/a5/f7/fba5f73d944105ec7239346d76b8439a.jpg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-attachment: fixed;
+      overflow-x: hidden;
+      min-height: 100vh;
+      position: relative;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.6);
+      z-index: -1;
+    }
+    #logo {
+      position: absolute;
+      top: 30px;
+      right: 20px;
+      width: 100px;
+      z-index: 999;
+    }
+    #container {
+      display: flex;
+      width: 90vw;
+      max-width: 1300px;
+      margin: auto;
+      padding: 20px;
+      padding-top: 120px;
+      min-height: calc(100vh - 40px);
+    }
+    #left-panel {
+      flex: 4;
+      padding: 25px;
+      text-align: center;
+    }
+    #question-box {
+      background: #fff8e1;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+      max-width: 420px;
+      margin: 0 auto;
+      border: 3px solid #ff9800;
+      transition: transform 0.3s ease;
+    }
+    #question-box:hover {
+      transform: scale(1.02);
+    }
+    #question {
+      font-size: 20px;
+      color: #e91e63;
+      margin-bottom: 20px;
+    }
+    #options input {
+      padding: 12px;
+      font-size: 18px;
+      width: 200px;
+      text-align: center;
+      border: 2px solid #03a9f4;
+      border-radius: 8px;
+    }
+    #options input.correct {
+      background-color: #c8e6c9;
+    }
+    #options input.wrong {
+      background-color: #ffcdd2;
+    }
+    #submitBtn, #nextBtn {
+      margin-top: 15px;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 10px;
+      background-color: #4caf50;
+      border: none;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    #submitBtn:hover, #nextBtn:hover {
+      background-color: #388e3c;
+    }
+    #result {
+      font-size: 18px;
+      margin-top: 15px;
+    }
+    #nextBtn {
+      display: none;
+    }
+    #right-panel {
+      flex: 6;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    canvas {
+      width: 100%; /* Full width of right panel */
+      max-width: 700px;
+      height: 70vh; /* Tall canvas */
+      max-height: 700px;
+      left: -30px;
+      border: 3px solid #2196f3;
+      background: rgba(255, 255, 255, 0.9);
+      cursor: crosshair;
+      display: block;
+      position: relative;
+      border-radius: 10px;
+    }
+    .tools {
+      position: absolute;
+      right: -10px;
+      top: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .tools button, .tools select, .tools input {
+      margin: 2px 0;
+      padding: 8px 2px;
+      font-size: 10px;
+      cursor: pointer;
+      border: 2px solid #ff4081;
+      border-radius: 8px;
+      background: #70deea;
+      transition: background 0.3s;
+      width: 35px;
+    }
+    .tools button:hover, .tools select:hover, .tools input:hover {
+      background: #4dd0e1;
+    }
+    #colorPicker {
+      padding: 5px;
+      height: 40px;
+    }
+    #canvasTextInput {
+      position: absolute;
+      display: none;
+      font-family: "Comic Sans MS";
+      font-size: 18px;
+      padding: 4px;
+      border: 2px solid #2196f3;
+      background: rgba(255, 255, 255, 0.95);
+      z-index: 10;
+      width: 200px;
+      border-radius: 5px;
+    }
+    #congratsModal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #ffeb3b;
+      border: 3px solid #ff4081;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      z-index: 1000;
+    }
+    #congratsModal h2 {
+      color: #e91e63;
+      font-size: 24px;
+      margin: 0 0 10px 0;
+    }
+    #congratsModal p {
+      color: #388e3c;
+      font-size: 18px;
+      margin: 0;
+    }
+    @media (max-width: 900px) {
+      #container {
+        flex-direction: column;
+        align-items: center;
+        padding-top: 120px;
+      }
+      #left-panel, #right-panel {
+        width: 100%;
+      }
+      canvas {
+        width: 90vw;
+        height: 60vh;
+        max-width: 95%;
+      }
+      .tools {
+        position: relative;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+      }
+      #question-box {
+        max-width: 95%;
+      }
+      #congratsModal {
+        width: 80%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<img id="logo" src="https://www.schooli.online/assets/schooli%20logo-B5Mx7tGQ.png" alt="Schooli Logo">
+
+<div id="container">
+  <div id="left-panel">
+    <div id="question-box">
+      <div id="question">Solve: <strong></strong></div>
+      <div id="options">
+        <input type="number" id="userAnswer" placeholder="Enter your answer">
+      </div>
+      <div id="result"></div>
+      <button id="submitBtn">Submit</button>
+      <button id="nextBtn">Next Question</button>
+    </div>
+  </div>
+  <div id="right-panel">
+    <div style="position: relative;">
+      <canvas id="drawCanvas"></canvas>
+      <input type="text" id="canvasTextInput">
+      <div class="tools">
+        <button id="penBtn">🖌️</button>
+        <button id="eraserBtn">🧽</button>
+        <select id="shapeSelector">
+          <option value="none">➖</option>
+          <option value="circle">🔵</option>
+          <option value="rectangle">⬛</option>
+          <option value="square">🟥</option>
+          <option value="triangle">🔺</option>
+        </select>
+        <input type="color" id="colorPicker" value="#000000">
+        <button id="textBtn">🔤</button>
+        <button id="clearBtn">🔄</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="congratsModal">
+  <h2>Congratulations!</h2>
+  <p>You've completed all the questions!</p>
+</div>
+<script>
+  const canvas = document.getElementById('drawCanvas');
+  const ctx = canvas.getContext('2d');
+  let drawing = false, erasing = false, currentShape = 'none', addingText = false;
+  let startX, startY;
+  let currentColor = '#000000';
+  const textInput = document.getElementById('canvasTextInput');
+
+  function resizeCanvasToDisplaySize(canvas) {
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+  }
+  resizeCanvasToDisplaySize(canvas);
+  window.addEventListener('resize', () => resizeCanvasToDisplaySize(canvas));
+
+  canvas.addEventListener('mousedown', e => {
+    drawing = true;
+    startX = e.offsetX;
+    startY = e.offsetY;
+    ctx.beginPath();
+    if (currentShape === 'none' && !addingText) {
+      ctx.moveTo(startX, startY);
+    }
+  });
+
+  canvas.addEventListener('mousemove', e => {
+    if (!drawing) return;
+    ctx.strokeStyle = erasing ? '#fff' : currentColor;
+    ctx.fillStyle = currentColor;
+    ctx.lineWidth = erasing ? 30 : 2;
+
+    if (currentShape !== 'none') {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (currentShape === 'circle') {
+        const radius = Math.sqrt((e.offsetX - startX) ** 2 + (e.offsetY - startY) ** 2);
+        ctx.beginPath();
+        ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+        ctx.stroke();
+      } else if (currentShape === 'rectangle') {
+        ctx.strokeRect(startX, startY, e.offsetX - startX, e.offsetY - startY);
+      } else if (currentShape === 'square') {
+        const size = Math.max(Math.abs(e.offsetX - startX), Math.abs(e.offsetY - startY));
+        ctx.strokeRect(startX, startY, size, size);
+      } else if (currentShape === 'triangle') {
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(e.offsetX, e.offsetY);
+        ctx.lineTo(startX - (e.offsetX - startX), e.offsetY);
+        ctx.closePath();
+        ctx.stroke();
+      }
+    } else if (!addingText) {
+      ctx.lineTo(e.offsetX, e.offsetY);
+      ctx.stroke();
+    }
+  });
+
+  canvas.addEventListener('mouseup', e => {
+    if (currentShape !== 'none') {
+      ctx.stroke();
+    }
+    drawing = false;
+  });
+
+  canvas.addEventListener('mouseleave', () => drawing = false);
+
+  document.getElementById('penBtn').onclick = () => {
+    erasing = false; currentShape = 'none'; addingText = false; textInput.style.display = 'none';
+  };
+  document.getElementById('eraserBtn').onclick = () => {
+    erasing = true; currentShape = 'none'; addingText = false; textInput.style.display = 'none';
+  };
+  document.getElementById('shapeSelector').onchange = (e) => {
+    currentShape = e.target.value;
+    erasing = false; addingText = false; textInput.style.display = 'none';
+  };
+  document.getElementById('colorPicker').onchange = (e) => {
+    currentColor = e.target.value;
+    erasing = false; currentShape = 'none'; addingText = false; textInput.style.display = 'none';
+  };
+  document.getElementById('textBtn').onclick = () => {
+    erasing = false; currentShape = 'none'; addingText = true; textInput.style.display = 'none';
+  };
+  document.getElementById('clearBtn').onclick = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    textInput.style.display = 'none';
+  };
+
+  canvas.addEventListener('click', (e) => {
+    if (addingText) {
+      const inputX = Math.min(e.offsetX, canvas.width - 200);
+      const inputY = Math.min(e.offsetY, canvas.height - 28);
+      textInput.style.left = `${inputX}px`;
+      textInput.style.top = `${inputY}px`;
+      textInput.style.display = 'block';
+      textInput.value = '';
+      textInput.focus();
+      startX = inputX;
+      startY = inputY;
+    }
+  });
+
+  textInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      const text = textInput.value;
+      if (text) {
+        ctx.font = '24px Comic Sans MS';
+        ctx.fillStyle = currentColor;
+        ctx.fillText(text, startX, startY + 24);
+      }
+      textInput.style.display = 'none';
+      addingText = false;
+    }
+  });
+
+  textInput.addEventListener('blur', () => {
+    const text = textInput.value;
+    if (text) {
+      ctx.font = '24px Comic Sans MS';
+      ctx.fillStyle = currentColor;
+      ctx.fillText(text, startX, startY + 24);
+    }
+    textInput.style.display = 'none';
+    addingText = false;
+  });
+
+  const questions = [
+    { q: 'What comes after 12?', ans: '13' },
+    { q: 'What comes before 30?', ans: '29' },
+    { q: 'What number is between 45 and 47?', ans: '46' },
+    { q: 'What comes after 89?', ans: '90' },
+    { q: 'What comes before 51?', ans: '50'},
+    { q: 'What number is between 99 and 101?', ans: '100' },
+    { q: 'What comes after 75?', ans: '76' }
+  ];
+
+  let current = 0;
+  const questionEl = document.getElementById('question');
+  const userAnswer = document.getElementById('userAnswer');
+  const resultEl = document.getElementById('result');
+  const submitBtn = document.getElementById('submitBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+    function showCongratsModal() {
+    congratsModal.style.display = 'block';
+    setTimeout(() => {
+      congratsModal.style.display = 'none';
+      current = 0; // Reset quiz
+      loadQuestion();
+    }, 10000); // 10 seconds
+  }
+
+  function loadQuestion() {
+    const q = questions[current];
+    questionEl.innerHTML = `Solve: <strong>${q.q}</strong>`;
+    userAnswer.value = '';
+    userAnswer.classList.remove('correct', 'wrong');
+    resultEl.textContent = '';
+    submitBtn.style.display = 'inline-block';
+    nextBtn.style.display = 'none';
+    userAnswer.disabled = false;
+    userAnswer.focus();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    textInput.style.display = 'none';
+  }
+
+  function checkAnswer() {
+    const userInput = userAnswer.value.trim();
+    const correctAnswer = questions[current].ans;
+    if (userInput === correctAnswer) {
+      userAnswer.classList.add('correct');
+      userAnswer.classList.remove('wrong');
+      resultEl.textContent = '✔️ Correct!';
+      resultEl.style.color = 'green';
+      userAnswer.disabled = true;
+      submitBtn.style.display = 'none';
+      if (current < questions.length - 1) {
+        nextBtn.style.display = 'inline-block';
+      } else {
+        showCongratsModal();
+      }
+    } else {
+      userAnswer.classList.add('wrong');
+      userAnswer.classList.remove('correct');
+      resultEl.textContent = '❌ Try Again';
+      resultEl.style.color = 'red';
+      userAnswer.focus();
+    }
+  }
+
+  submitBtn.onclick = checkAnswer;
+  userAnswer.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      checkAnswer();
+    }
+  });
+
+  nextBtn.onclick = () => {
+    current++;
+    loadQuestion();
+  };
+
+  loadQuestion();
+</script>
+
+</body>
+</html>
